@@ -4,19 +4,18 @@ using PaymentGateway.Models;
 using PaymentGateway.PublishedLanguage.Events;
 using PaymentGateway.PublishedLanguage.WriteSide;
 using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace PaymentGateway.Application.WriteOpperations
 {
     public class CreateAccountOperation : IWriteOperations<CreateAccountCommand>
     {
-        public IEventSender eventSender;
-        public CreateAccountOperation(IEventSender eventSender)
+        private readonly IEventSender _eventSender;
+        private readonly AccountOptions _accountOptions;
+        public CreateAccountOperation(IEventSender eventSender, AccountOptions accountOptions)
         {
-            this.eventSender = eventSender;
+            _eventSender = eventSender;
+            _accountOptions = accountOptions;
         }
         public void PerformOperation(CreateAccountCommand operation)
         {
@@ -50,20 +49,22 @@ namespace PaymentGateway.Application.WriteOpperations
                 throw new Exception("Unsuported person type");
             }
 
-            Account account = new Account();
-            account.Limit = operation.Limit;
-            account.Status = operation.Status;
-            account.Currency = operation.Curency;
-            account.Type = operation.ClientType;
-            account.Balance = operation.Sold;
-            account.IbanCode = string.IsNullOrEmpty(operation.IbanCode) ? random.Next(1000).ToString(): operation.IbanCode  ;
-            account.Id = database.Persons.Count + 1;
+            Account account = new Account
+            {
+                Limit = operation.Limit,
+                Status = operation.Status,
+                Currency = operation.Curency,
+                Type = operation.ClientType,
+                Balance = operation.Sold,
+                IbanCode = string.IsNullOrEmpty(operation.IbanCode) ? random.Next(1000).ToString() : operation.IbanCode,
+                Id = database.Persons.Count + 1
+            };
 
             database.Accounts.Add(account);
             database.SaveChange();
 
             AccountCreated eventAcountCreated = new AccountCreated(operation.Sold, operation.Cnp, operation.Curency);
-            eventSender.SendEvent(eventAcountCreated);
+            _eventSender.SendEvent(eventAcountCreated);
 
         }
     }

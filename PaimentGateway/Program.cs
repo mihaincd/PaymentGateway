@@ -1,9 +1,16 @@
-﻿using PaymentGateway.Application.WriteOpperations;
+﻿using Abstractions;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+using PaymentGateway.Application;
+using PaymentGateway.Application.WriteOpperations;
 using PaymentGateway.Data;
 using PaymentGateway.ExternalService;
 using PaymentGateway.Models;
 using PaymentGateway.PublishedLanguage.WriteSide;
 using System;
+using System.Collections.Generic;
+using System.IO;
+using static PaymentGateway.PublishedLanguage.WriteSide.PurchaseProductCommand;
 
 namespace PaimentGateway
 {
@@ -17,9 +24,29 @@ namespace PaimentGateway
         /// 5.save to database
         /// 6.emitere eveniment
         /// </summary>
-       
+        static IConfiguration Configuration;
+
         static void Main(string[] args)
         {
+            Configuration = new ConfigurationBuilder()
+                .SetBasePath(Directory.GetCurrentDirectory())
+                .AddJsonFile("appsettings.json", optional: true, reloadOnChange: true)
+                .AddJsonFile($"appsettings.{Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") ?? "Production"}.json", optional: true, reloadOnChange: true)
+                .AddEnvironmentVariables()
+                .Build();
+            //setup
+            var services =new ServiceCollection();
+            services.RegisterBusinessServices(Configuration);
+
+            services.AddSingleton<IEventSender, EventSender>();
+            services.AddSingleton(Configuration);
+
+            //build
+            var serviceProvider = services.BuildServiceProvider();
+
+            //use
+
+
             Database database = Database.GetInstance();
             Console.WriteLine(database.Accounts.Count);
 
@@ -28,70 +55,81 @@ namespace PaimentGateway
             Account firstAccount = new Account();
             firstAccount.Balance = 100;
 
-            EnrollCustomerCommand command = new EnrollCustomerCommand();
-            command.Name = "Dorin";
-            command.AccountType = "Deposit";
-            command.Currency = "$";
-            command.UniqueIdentifier = "1234556789";
-            command.ClientType = "Individual";
+            EnrollCustomerCommand command = new EnrollCustomerCommand
+            {
+                Name = "Dorin",
+                AccountType = "Deposit",
+                Currency = "$",
+                UniqueIdentifier = "1234556789",
+                ClientType = "Individual"
+            };
 
-            EnrollCustomerOperation enrolledClient = new EnrollCustomerOperation(eventSender);
+            EnrollCustomerOperation enrolledClient = serviceProvider.GetRequiredService<EnrollCustomerOperation>();
             enrolledClient.PerformOperation(command);
 
-            CreateAccountCommand newAccount = new CreateAccountCommand();
-            newAccount.Status="Active";
-            newAccount.Sold = 212;
-            newAccount.Limit = 300;
-            newAccount.ClientType = "Individual";
-            newAccount.Cnp = "234567654321";
-            newAccount.Curency = "$";
-            newAccount.PersonId = 1;
-            newAccount.IbanCode = "Ro2145";
+            CreateAccountCommand newAccount = new CreateAccountCommand
+            {
+                Status = "Active",
+                Sold = 212,
+                Limit = 300,
+                ClientType = "Individual",
+                Cnp = "234567654321",
+                Curency = "$",
+                PersonId = 1,
+                IbanCode = "Ro2145"
+            };
 
-            CreateAccountOperation createdAccount = new CreateAccountOperation(eventSender);
+            CreateAccountOperation createdAccount = serviceProvider.GetRequiredService<CreateAccountOperation>();
             createdAccount.PerformOperation(newAccount);
 
 
-            DepositMoneyCommand depositMoney = new DepositMoneyCommand();
-            depositMoney.DepositAmmount = 222;
-            depositMoney.AcountId = 2;
-            depositMoney.Curency = "$";
-            depositMoney.DateOfOperation = DateTime.UtcNow;
+            DepositMoneyCommand depositMoney = new DepositMoneyCommand
+            {
+                DepositAmmount = 222,
+                AcountId = 2,
+                Curency = "$",
+                DateOfOperation = DateTime.UtcNow
+            };
 
-            DepositMoneyOperation depositOperation = new DepositMoneyOperation(eventSender);
+            DepositMoneyOperation depositOperation = serviceProvider.GetRequiredService<DepositMoneyOperation>();
             depositOperation.PerformOperation(depositMoney);
 
 
-            WithdrawMoneyCommand withdrawMoney = new WithdrawMoneyCommand();
-            withdrawMoney.AcountId = 2;
-            withdrawMoney.Curency = "$";
-            withdrawMoney.WithdrawAmmount = 100;
-            withdrawMoney.DateOfOperation = DateTime.UtcNow;
+            WithdrawMoneyCommand withdrawMoney = new WithdrawMoneyCommand
+            {
+                AcountId = 2,
+                Curency = "$",
+                WithdrawAmmount = 100,
+                DateOfOperation = DateTime.UtcNow
+            };
 
-            WithdrawMoneyOperation withdrawOperation = new WithdrawMoneyOperation(eventSender);
+            WithdrawMoneyOperation withdrawOperation = serviceProvider.GetRequiredService<WithdrawMoneyOperation>();
             withdrawOperation.PerformOperation(withdrawMoney);
 
 
-            CreateProductCommand newProduct = new CreateProductCommand();
-            newProduct.Name = "Masline Verzi";
-            newProduct.Value = 3;
-            newProduct.Curency = "$";
-            newProduct.Limit = 5;
+            CreateProductCommand newProduct = new CreateProductCommand
+            {
+                Name = "Masline Verzi",
+                Value = 3,
+                Curency = "$",
+                Limit = 5
+            };
 
-            CreateProductOperation createProductOperation = new CreateProductOperation(eventSender);
+            CreateProductOperation createProductOperation = serviceProvider.GetRequiredService<CreateProductOperation>();
             createProductOperation.PerformOperation(newProduct);
 
 
-            PurchaseProductCommand newPurchaseProduct = new PurchaseProductCommand();
-            newPurchaseProduct.IdAccount = newAccount.PersonId;
-            newPurchaseProduct.Limit = 3;
-            newPurchaseProduct.Name = "ciorbica";
-            newPurchaseProduct.Quantity = 10;
-            newPurchaseProduct.Value = 1;
-            newPurchaseProduct.Curency = "$";
-
-            PurchaseProductOperation purchaseProductOperation = new PurchaseProductOperation(eventSender);
-            purchaseProductOperation.PerformOperation(newPurchaseProduct);
+            PurchaseProductCommand purchaseProductCommand = new PurchaseProductCommand
+            {
+                IbanCode = "69RO69INGB4204206969",
+                UniqueIdentifier = "2970304234566",
+                ProductDetails = new List<PurchaseProductDetail>
+            {
+                new PurchaseProductDetail { ProductId = newProduct.IdProduct, Quantity = 3 }
+            }
+            };
+            PurchaseProductOperation purchaseProductOperation = serviceProvider.GetRequiredService<PurchaseProductOperation>();
+            purchaseProductOperation.PerformOperation(purchaseProductCommand);
         }
     }
 }

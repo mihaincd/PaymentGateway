@@ -8,6 +8,7 @@ namespace PaymentGateway.PublishedLanguage.WriteSide
 {
     public class CreateProductCommand
     {
+        public int IdProduct { get; set; }
         public string Name { get; set; }
         public double Value { get; set; }
         public string Curency { get; set; }

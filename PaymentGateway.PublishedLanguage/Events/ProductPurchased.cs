@@ -3,15 +3,13 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using static PaymentGateway.PublishedLanguage.WriteSide.PurchaseProductCommand;
 
 namespace PaymentGateway.PublishedLanguage.Events
 {
     public class ProductPurchased
     {
-        public string Name { get; set; }
-        public double Value { get; set; }
-        public string Curency { get; set; }
-        public int Limit { get; set; }
+        public List<PurchaseProductDetail> ProductDetails = new List<PurchaseProductDetail>();
 
     }
 }

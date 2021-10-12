@@ -18,47 +18,87 @@ namespace PaymentGateway.Application.WriteOpperations
         {
             this.eventSender = eventSender;
         }
+
         public void PerformOperation(PurchaseProductCommand operation)
         {
             Database database = Database.GetInstance();
+            Account account;
+            Person person;
+
+            if (operation.IdAccount.HasValue)
+            {
+                account = database.Accounts.FirstOrDefault(x => x.Id == operation.IdAccount);
+            }
+            else
+            {
+                account = database.Accounts.FirstOrDefault(x => x.IbanCode == operation.IbanCode);
+            }
+
+            if (operation.IdPerson.HasValue)
+            {
+                person = database.Persons.FirstOrDefault(x => x.Id == operation.IdPerson);
+            }
+            else
+            {
+                person = database.Persons.FirstOrDefault(x => x.Cnp == operation.UniqueIdentifier);
+            }
+
+            if (account == null) throw new Exception("Account not found");
+
+            if (person == null) throw new Exception("Person not found");
+
+            var exists = database.Accounts.Any(x => x.Id == person.Id && x.Id == account.Id);
+
+            if (!exists)
+            {
+                throw new Exception("The person is not associated with the account!");
+            }
+
+            var totalAmount = 0d;
+
+            foreach (var item in operation.ProductDetails)
+            {
+                var product = database.Products.FirstOrDefault(x => x.Id == item.ProductId);
+
+                if (product.Limit < item.Quantity)
+                {
+                    throw new Exception("Insuficient quantity");
+                }
+
+                //product.Limit -= item.Quantity;
+
+                totalAmount += item.Quantity * product.Value;
+            }
+
+            if (account.Balance < totalAmount)
+            {
+                throw new Exception("You have insuficient funds!");
+            }
+
             Transaction transaction = new Transaction();
-            Account account = new Account();
-
-            ProductXTransaction pxt = new ProductXTransaction();
-            Product product = database.Products.FirstOrDefault(x => x.Name == operation.Name);
-            
-            pxt.ProductId = product.Id;
-            pxt.TransactionId = transaction.Id;
-
-            if (operation.Value > account.Balance)
-            {
-                throw new Exception("Fond insuficient");
-            }
-            if (operation.Limit > product.Limit)
-            {
-                throw new Exception("Nu avem atatea produse disponibile");
-            }
-
-            product.Name = operation.Name;
-            product.Limit=operation.Limit ;
-            product.Value=operation.Value;
-            product.Curency = operation.Curency;
-
+            transaction.Amount = -totalAmount;
             database.Transactions.Add(transaction);
-            database.ProductXTransactions.Add(pxt);
+            account.Balance -= totalAmount;
+
+            foreach (var item in operation.ProductDetails)
+            {
+                var product = database.Products.FirstOrDefault(x => x.Id == item.ProductId);
+                ProductXTransaction productXTransaction = new ProductXTransaction();
+                productXTransaction.TransactionId = transaction.Id;
+                productXTransaction.ProductId = item.ProductId;
+                productXTransaction.Quantity = item.Quantity;
+                productXTransaction.Value = product.Value;
+                productXTransaction.Name = product.Name;
+            }
+
 
             database.SaveChange();
 
             ProductPurchased eventProductPurchased = new ProductPurchased()
             {
-                Curency = operation.Curency,
-                Limit = operation.Limit,
-                Name = operation.Name,
-                Value = operation.Value
+                ProductDetails = operation.ProductDetails
             };
             eventSender.SendEvent(eventProductPurchased);
-
-
 
         }
     }
