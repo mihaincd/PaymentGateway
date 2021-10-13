@@ -1,5 +1,6 @@
 ﻿using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using PaymentGateway.Application.ReadOpperations;
 using PaymentGateway.Application.WriteOpperations;
 
 namespace PaymentGateway.Application
@@ -14,7 +15,8 @@ namespace PaymentGateway.Application
             services.AddTransient<WithdrawMoneyOperation>();
             services.AddTransient<PurchaseProductOperation>();
 
-            services.AddTransient<Data.Database>();
+            services.AddSingleton<NewIban>();
+            services.AddSingleton<Data.Database>();
 
             services.AddSingleton(sp =>
             {

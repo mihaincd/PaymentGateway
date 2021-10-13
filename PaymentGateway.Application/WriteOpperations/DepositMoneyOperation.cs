@@ -5,37 +5,41 @@ using PaymentGateway.Models;
 using PaymentGateway.PublishedLanguage.Events;
 using PaymentGateway.PublishedLanguage.WriteSide;
 using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace PaymentGateway.Application.WriteOpperations
 {
     public class DepositMoneyOperation : IWriteOperations<DepositMoneyCommand>
     {
-        public IEventSender eventSender;
-        public DepositMoneyOperation(IEventSender eventSender)
+        private readonly IEventSender _eventSender;
+        private readonly Database _database;
+
+        public DepositMoneyOperation(IEventSender eventSender, Database database)
         {
-            this.eventSender = eventSender;
+            _eventSender = eventSender;
+            _database = database;
         }
+
+
         public void PerformOperation(DepositMoneyCommand operation)
         {
-            Database database = Database.GetInstance();
 
-            Account acount = database.Accounts.FirstOrDefault(x => x.Id == operation.AcountId);
-            Transaction transaction = new Transaction();
-            transaction.Amount = operation.DepositAmmount;
-            transaction.Currency = operation.Curency;
-            transaction.DateOfTransaction = operation.DateOfTransaction;
-            transaction.DateOfOperation = DateTime.UtcNow;
+            Account acount = _database.Accounts.FirstOrDefault(x => x.Id == operation.AcountId);
+            
+            Transaction transaction = new Transaction
+            {
+                Amount = operation.DepositAmmount,
+                Currency = operation.Curency,
+                DateOfTransaction = operation.DateOfTransaction,
+                DateOfOperation = DateTime.UtcNow
+            };
             var oldAmount = acount.Balance;
 
             acount.Balance += operation.DepositAmmount;
 
 
-            database.Transactions.Add(transaction);
-            database.SaveChange();
+            _database.Transactions.Add(transaction);
+            _database.SaveChange();
 
             BalanceUpdated eventBalanceUpdated = new BalanceUpdated
             {
@@ -45,7 +49,7 @@ namespace PaymentGateway.Application.WriteOpperations
                 OldAmount = oldAmount,
                 NewAmount = acount.Balance
             };
-            eventSender.SendEvent(eventBalanceUpdated);
+            _eventSender.SendEvent(eventBalanceUpdated);
 
         }
     }

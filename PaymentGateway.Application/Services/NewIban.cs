@@ -11,19 +11,19 @@ namespace PaymentGateway.Application.ReadOpperations
     {
         private readonly Database _database;
 
-        public static string GetNewIban()
+        public NewIban(Database database)
         {
-            var database = Database.GetInstance();
-            var accounts = database.Accounts;//.ForEach(acc => acc.Iban);
+            //var database = Database.GetInstance();
+            //var accounts = database.Accounts;//.ForEach(acc => acc.Iban);
 
             //List<String> ibans = accounts.ForEach(e =>  e.Iban);
+            _database = database;
+        }
+        public string GetNewIban()
+        {
+            List<String> ibans = _database.Accounts.Select(x => x.IbanCode).ToList();
 
-            List<String> ibans = new List<String>();
-            foreach (var acc in accounts)
-            {
-                ibans.Add(acc.IbanCode);
-            }
-            if (ibans.ToArray().Count() == 0)
+            if (ibans.Count() == 0)
                 return "1";
 
             return (Int64.Parse(ibans.Last()) + 1).ToString();

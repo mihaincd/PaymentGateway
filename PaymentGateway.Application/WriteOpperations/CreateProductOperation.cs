@@ -13,15 +13,16 @@ namespace PaymentGateway.Application.WriteOpperations
 {
     public class CreateProductOperation : IWriteOperations<CreateProductCommand>
     {
-        public IEventSender eventSender;
-        public CreateProductOperation(IEventSender eventSender)
+        private readonly IEventSender _eventSender;
+        private readonly Database _database;
+        public CreateProductOperation(IEventSender eventSender, Database database)
         {
-            this.eventSender = eventSender;
-        }
+            _eventSender = eventSender;
+            _database = database;
 
+        }
         public void PerformOperation(CreateProductCommand operation)
         {
-            Database db = Database.GetInstance();
 
             Product product = new Product();
             product.Curency = operation.Curency;
@@ -29,8 +30,8 @@ namespace PaymentGateway.Application.WriteOpperations
             product.Name = operation.Name;
             product.Value = operation.Value;
 
-            db.Products.Add(product);
-            db.SaveChange();
+            _database.Products.Add(product);
+            _database.SaveChange();
 
 
 
@@ -40,7 +41,7 @@ namespace PaymentGateway.Application.WriteOpperations
                 Value = operation.Value,
                 Name = operation.Name
             };
-            eventSender.SendEvent(eventProductCreated);
+            _eventSender.SendEvent(eventProductCreated);
         }
     }
 }

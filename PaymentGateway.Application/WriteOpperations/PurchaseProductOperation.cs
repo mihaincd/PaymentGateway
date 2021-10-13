@@ -13,41 +13,43 @@ namespace PaymentGateway.Application.WriteOpperations
 {
     public class PurchaseProductOperation : IWriteOperations<PurchaseProductCommand>
     {
-        public IEventSender eventSender;
-        public PurchaseProductOperation(IEventSender eventSender)
+        private readonly IEventSender _eventSender;
+        private readonly Database _database;
+
+        public PurchaseProductOperation(IEventSender eventSender, Database database)
         {
-            this.eventSender = eventSender;
+            _eventSender = eventSender;
+            _database = database;
         }
 
         public void PerformOperation(PurchaseProductCommand operation)
         {
-            Database database = Database.GetInstance();
             Account account;
             Person person;
 
             if (operation.IdAccount.HasValue)
             {
-                account = database.Accounts.FirstOrDefault(x => x.Id == operation.IdAccount);
+                account = _database.Accounts.FirstOrDefault(x => x.Id == operation.IdAccount);
             }
             else
             {
-                account = database.Accounts.FirstOrDefault(x => x.IbanCode == operation.IbanCode);
+                account = _database.Accounts.FirstOrDefault(x => x.IbanCode == operation.IbanCode);
             }
 
             if (operation.IdPerson.HasValue)
             {
-                person = database.Persons.FirstOrDefault(x => x.Id == operation.IdPerson);
+                person = _database.Persons.FirstOrDefault(x => x.Id == operation.IdPerson);
             }
             else
             {
-                person = database.Persons.FirstOrDefault(x => x.Cnp == operation.UniqueIdentifier);
+                person = _database.Persons.FirstOrDefault(x => x.Cnp == operation.UniqueIdentifier);
             }
 
             if (account == null) throw new Exception("Account not found");
 
             if (person == null) throw new Exception("Person not found");
 
-            var exists = database.Accounts.Any(x => x.Id == person.Id && x.Id == account.Id);
+            var exists = _database.Accounts.Any(x => x.Id == person.Id && x.Id == account.Id);
 
             if (!exists)
             {
@@ -58,7 +60,7 @@ namespace PaymentGateway.Application.WriteOpperations
 
             foreach (var item in operation.ProductDetails)
             {
-                var product = database.Products.FirstOrDefault(x => x.Id == item.ProductId);
+                var product = _database.Products.FirstOrDefault(x => x.Id == item.ProductId);
 
                 if (product.Limit < item.Quantity)
                 {
@@ -77,12 +79,12 @@ namespace PaymentGateway.Application.WriteOpperations
 
             Transaction transaction = new Transaction();
             transaction.Amount = -totalAmount;
-            database.Transactions.Add(transaction);
+            _database.Transactions.Add(transaction);
             account.Balance -= totalAmount;
 
             foreach (var item in operation.ProductDetails)
             {
-                var product = database.Products.FirstOrDefault(x => x.Id == item.ProductId);
+                var product = _database.Products.FirstOrDefault(x => x.Id == item.ProductId);
                 ProductXTransaction productXTransaction = new ProductXTransaction();
                 productXTransaction.TransactionId = transaction.Id;
                 productXTransaction.ProductId = item.ProductId;
@@ -92,13 +94,13 @@ namespace PaymentGateway.Application.WriteOpperations
             }
 
 
-            database.SaveChange();
+            _database.SaveChange();
 
             ProductPurchased eventProductPurchased = new ProductPurchased()
             {
                 ProductDetails = operation.ProductDetails
             };
-            eventSender.SendEvent(eventProductPurchased);
+            _eventSender.SendEvent(eventProductPurchased);
 
         }
     }

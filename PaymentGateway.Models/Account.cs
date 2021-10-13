@@ -5,6 +5,7 @@ namespace PaymentGateway.Models
     public class Account
     {
         public int Id { get; set; }
+        public int IdPerson { get; set; }
         public double Balance { get; set; }
         public double Limit { get; set; }
         public string Currency{ get; set; }

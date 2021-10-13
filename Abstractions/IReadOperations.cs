@@ -2,7 +2,9 @@
 
 namespace Abstractions
 {
-    public class IReadOperations
+    public interface IReadOperation<TInput, TResult>
     {
+        TResult PerformOperation(TInput query);
+
     }
 }

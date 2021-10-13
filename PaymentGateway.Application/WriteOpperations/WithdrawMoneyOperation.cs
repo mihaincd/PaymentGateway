@@ -14,16 +14,18 @@ namespace PaymentGateway.Application.WriteOpperations
 {
     public class WithdrawMoneyOperation : IWriteOperations<WithdrawMoneyCommand>
     {
-        public IEventSender eventSender;
-        public WithdrawMoneyOperation(IEventSender eventSender)
+        private readonly IEventSender _eventSender;
+        private readonly Database _database;
+
+        public WithdrawMoneyOperation(IEventSender eventSender, Database database)
         {
-            this.eventSender = eventSender;
+            _eventSender = eventSender;
+            _database = database;
         }
         public void PerformOperation(WithdrawMoneyCommand operation)
         {
-            Database database = Database.GetInstance();
 
-            Account acount = database.Accounts.FirstOrDefault(x => x.Id == operation.AcountId);
+            Account acount = _database.Accounts.FirstOrDefault(x => x.Id == operation.AcountId);
             Transaction transaction = new Transaction();
             transaction.Amount = operation.WithdrawAmmount;
             transaction.Currency = operation.Curency;
@@ -34,8 +36,8 @@ namespace PaymentGateway.Application.WriteOpperations
             acount.Balance -= operation.WithdrawAmmount;
 
 
-            database.Transactions.Add(transaction);
-            database.SaveChange();
+            _database.Transactions.Add(transaction);
+            _database.SaveChange();
 
             BalanceUpdated eventBalanceUpdated = new BalanceUpdated
             {
@@ -46,7 +48,7 @@ namespace PaymentGateway.Application.WriteOpperations
                 OldAmount = oldAmount,
                 NewAmount = acount.Balance
             };
-            eventSender.SendEvent(eventBalanceUpdated);
+            _eventSender.SendEvent(eventBalanceUpdated);
 
 
         }

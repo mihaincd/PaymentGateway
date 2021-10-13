@@ -1,4 +1,5 @@
 ﻿using Abstractions;
+using PaymentGateway.Application.ReadOpperations;
 using PaymentGateway.Data;
 using PaymentGateway.Models;
 using PaymentGateway.PublishedLanguage.Events;
@@ -12,24 +13,27 @@ namespace PaymentGateway.Application.WriteOpperations
     {
         private readonly IEventSender _eventSender;
         private readonly AccountOptions _accountOptions;
-        public CreateAccountOperation(IEventSender eventSender, AccountOptions accountOptions)
+        private readonly Database _database;
+        private readonly NewIban _ibanService;
+        public CreateAccountOperation(IEventSender eventSender, AccountOptions accountOptions, Database database, NewIban ibanService)
         {
             _eventSender = eventSender;
             _accountOptions = accountOptions;
+            _database = database;
+            _ibanService = ibanService;
         }
         public void PerformOperation(CreateAccountCommand operation)
         {
-            Random random = new Random();
+            Random random = new();
 
-            Database database = Database.GetInstance();
             Person person;
             if (operation.PersonId.HasValue)
             {
-                person = database.Persons.FirstOrDefault(x => x.Id == operation.PersonId); //get person by id
+                person = _database.Persons.FirstOrDefault(x => x.Id == operation.PersonId); //get person by id
             }
             else
             {
-                person = database.Persons.FirstOrDefault(x => x.Cnp == operation.Cnp);
+                person = _database.Persons.FirstOrDefault(x => x.Cnp == operation.Cnp);
             }
             if (person == null)
             {
@@ -49,21 +53,21 @@ namespace PaymentGateway.Application.WriteOpperations
                 throw new Exception("Unsuported person type");
             }
 
-            Account account = new Account
+            Account account = new()
             {
                 Limit = operation.Limit,
                 Status = operation.Status,
                 Currency = operation.Curency,
                 Type = operation.ClientType,
                 Balance = operation.Sold,
-                IbanCode = string.IsNullOrEmpty(operation.IbanCode) ? random.Next(1000).ToString() : operation.IbanCode,
-                Id = database.Persons.Count + 1
+                IbanCode = _ibanService.GetNewIban(),
+                Id = _database.Persons.Count + 1
             };
 
-            database.Accounts.Add(account);
-            database.SaveChange();
+            _database.Accounts.Add(account);
+            _database.SaveChange();
 
-            AccountCreated eventAcountCreated = new AccountCreated(operation.Sold, operation.Cnp, operation.Curency);
+            AccountCreated eventAcountCreated = new(operation.Sold, operation.Cnp, operation.Curency);
             _eventSender.SendEvent(eventAcountCreated);
 
         }

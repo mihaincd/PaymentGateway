@@ -2,6 +2,7 @@
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using PaymentGateway.Application;
+using PaymentGateway.Application.ReadOpperations;
 using PaymentGateway.Application.WriteOpperations;
 using PaymentGateway.Data;
 using PaymentGateway.ExternalService;
@@ -35,7 +36,7 @@ namespace PaimentGateway
                 .AddEnvironmentVariables()
                 .Build();
             //setup
-            var services =new ServiceCollection();
+            var services = new ServiceCollection();
             services.RegisterBusinessServices(Configuration);
 
             services.AddSingleton<IEventSender, EventSender>();
@@ -43,19 +44,21 @@ namespace PaimentGateway
 
             //build
             var serviceProvider = services.BuildServiceProvider();
+            var database = serviceProvider.GetRequiredService<Database>();
+            var ibanService = serviceProvider.GetRequiredService<NewIban>();
 
             //use
 
 
-            Database database = Database.GetInstance();
+            //Database database = Database.GetInstance();
             Console.WriteLine(database.Accounts.Count);
 
-            EventSender eventSender = new EventSender();
+            //EventSender eventSender = new EventSender();
 
-            Account firstAccount = new Account();
+            Account firstAccount = new();
             firstAccount.Balance = 100;
 
-            EnrollCustomerCommand command = new EnrollCustomerCommand
+            EnrollCustomerCommand command = new()
             {
                 Name = "Dorin",
                 AccountType = "Deposit",
@@ -67,7 +70,7 @@ namespace PaimentGateway
             EnrollCustomerOperation enrolledClient = serviceProvider.GetRequiredService<EnrollCustomerOperation>();
             enrolledClient.PerformOperation(command);
 
-            CreateAccountCommand newAccount = new CreateAccountCommand
+            CreateAccountCommand newAccount = new()
             {
                 Status = "Active",
                 Sold = 212,
@@ -76,14 +79,14 @@ namespace PaimentGateway
                 Cnp = "234567654321",
                 Curency = "$",
                 PersonId = 1,
-                IbanCode = "Ro2145"
+                IbanCode = (Int64.Parse(ibanService.GetNewIban()) - 1).ToString()
             };
 
             CreateAccountOperation createdAccount = serviceProvider.GetRequiredService<CreateAccountOperation>();
             createdAccount.PerformOperation(newAccount);
 
 
-            DepositMoneyCommand depositMoney = new DepositMoneyCommand
+            DepositMoneyCommand depositMoney = new()
             {
                 DepositAmmount = 222,
                 AcountId = 2,
@@ -95,7 +98,7 @@ namespace PaimentGateway
             depositOperation.PerformOperation(depositMoney);
 
 
-            WithdrawMoneyCommand withdrawMoney = new WithdrawMoneyCommand
+            WithdrawMoneyCommand withdrawMoney = new()
             {
                 AcountId = 2,
                 Curency = "$",
@@ -107,7 +110,7 @@ namespace PaimentGateway
             withdrawOperation.PerformOperation(withdrawMoney);
 
 
-            CreateProductCommand newProduct = new CreateProductCommand
+            CreateProductCommand newProduct = new()
             {
                 Name = "Masline Verzi",
                 Value = 3,
@@ -119,9 +122,9 @@ namespace PaimentGateway
             createProductOperation.PerformOperation(newProduct);
 
 
-            PurchaseProductCommand purchaseProductCommand = new PurchaseProductCommand
+            PurchaseProductCommand purchaseProductCommand = new()
             {
-                IbanCode = "69RO69INGB4204206969",
+                IbanCode = (Int64.Parse(ibanService.GetNewIban()) - 1).ToString(),
                 UniqueIdentifier = "2970304234566",
                 ProductDetails = new List<PurchaseProductDetail>
             {
@@ -130,6 +133,15 @@ namespace PaimentGateway
             };
             PurchaseProductOperation purchaseProductOperation = serviceProvider.GetRequiredService<PurchaseProductOperation>();
             purchaseProductOperation.PerformOperation(purchaseProductCommand);
+
+
+            var query = new ListOfAccounts.Query
+            {
+                PersonId = 1
+            };
+            var handler = serviceProvider.GetRequiredService<ListOfAccounts.QueryHandler>();
+            var result = handler.PerformOperation(query);
+
         }
     }
 }
