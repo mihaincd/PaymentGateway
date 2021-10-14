@@ -3,16 +3,17 @@ using PaymentGateway.Data;
 using PaymentGateway.Models;
 using PaymentGateway.PublishedLanguage.Events;
 using PaymentGateway.PublishedLanguage.Commands;
+using MediatR;
 
 namespace PaymentGateway.Application.WriteOpperations
 {
     public class CreateProductOperation : IWriteOperations<CreateProductCommand>
     {
-        private readonly IEventSender _eventSender;
+        private readonly Mediator _mediator;
         private readonly Database _database;
-        public CreateProductOperation(IEventSender eventSender, Database database)
+        public CreateProductOperation(Mediator mediator, Database database)
         {
-            _eventSender = eventSender;
+            _mediator = mediator;
             _database = database;
 
         }
@@ -36,7 +37,7 @@ namespace PaymentGateway.Application.WriteOpperations
                 Value = operation.Value,
                 Name = operation.Name
             };
-            _eventSender.SendEvent(eventProductCreated);
+            _mediator.Send(eventProductCreated);
         }
     }
 }

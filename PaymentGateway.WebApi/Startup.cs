@@ -1,9 +1,10 @@
-﻿using Abstractions;
+﻿using MediatR;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using PaymentGateway.Application;
+using PaymentGateway.Application.Queries;
 using PaymentGateway.Application.WriteOpperations;
 using PaymentGateway.ExternalService;
 using PaymentGateway.WebApi.Swagger;
@@ -23,7 +24,17 @@ namespace PaymentGateway.WebApi
             services.AddControllers();
             services.AddMvc(o => o.EnableEndpointRouting = false);
 
-            services.AddSingleton<IEventSender, EventSender>();
+            //services.AddSingleton<IEventSender, EventSender>();
+            //services.AddMediatR(typeof(EnrollAgentComandHandler).Assembly);
+
+            var firstAssembly = typeof(ListOfAccounts).Assembly; // handlere c1..c3
+            //var firstAssembly = typeof(Program).Assembly; // handler generic
+            var secondAssembly = typeof(AllEventsHandler).Assembly; // catch all
+            //var trdasembly = System.Reflection.Assembly.LoadFrom("c:/a.dll");
+            services.AddMediatR(firstAssembly, secondAssembly); // get all IRequestHandler and INotificationHandler classes
+
+
+
             services.AddTransient<CreateAccountOperation>();
 
 

@@ -13,18 +13,18 @@ namespace PaymentGateway.Application.WriteOpperations
 {
     public class EnrollCustomerOperation : IRequestHandler<EnrollCustomerCommand>
     {
-        private readonly IEventSender _eventSender;
+        private readonly Mediator _mediator;
         private readonly Database _database;
         private readonly NewIban _ibanService;
 
-        public EnrollCustomerOperation(IEventSender eventSender, Database database, NewIban ibanService)
+        public EnrollCustomerOperation(Mediator mediator, Database database, NewIban ibanService)
         {
-            _eventSender = eventSender;
+            _mediator = mediator;
             _database = database;
             _ibanService = ibanService;
         }
 
-        public Task<Unit> Handle(EnrollCustomerCommand request, CancellationToken cancellationToken)
+        public async Task<Unit> Handle(EnrollCustomerCommand request, CancellationToken cancellationToken)
         {
             Person person = new()
             {
@@ -57,9 +57,9 @@ namespace PaymentGateway.Application.WriteOpperations
             _database.SaveChange();
 
             CustomerEnrolled eventCustomerEnroll = new(request.Name, request.UniqueIdentifier, request.ClientType);
-            _eventSender.SendEvent(eventCustomerEnroll);
+            await _mediator.Publish(eventCustomerEnroll);
 
-            return Unit.Task;
+            return Unit.Value;
         }
 
         

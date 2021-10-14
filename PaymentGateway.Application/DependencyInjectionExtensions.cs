@@ -1,7 +1,9 @@
-﻿using Microsoft.Extensions.Configuration;
+﻿using Abstractions;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using PaymentGateway.Application.ReadOpperations;
 using PaymentGateway.Application.WriteOpperations;
+using static PaymentGateway.Application.Queries.ListOfAccounts;
 
 namespace PaymentGateway.Application
 {
@@ -9,14 +11,18 @@ namespace PaymentGateway.Application
     {
         public static IServiceCollection RegisterBusinessServices(this IServiceCollection services, IConfiguration configuration)
         {
-            services.AddTransient<EnrollCustomerOperation>();
-            services.AddTransient<CreateAccountOperation>();
-            services.AddTransient<DepositMoneyOperation>();
-            services.AddTransient<WithdrawMoneyOperation>();
-            services.AddTransient<PurchaseProductOperation>();
+            //services.AddTransient<EnrollCustomerOperation>();
+            //services.AddTransient<CreateAccountOperation>();
+            //services.AddTransient<DepositMoneyOperation>();
+            //services.AddTransient<WithdrawMoneyOperation>();
+            //services.AddTransient<PurchaseProductOperation>();
 
             services.AddSingleton<NewIban>();
+
             services.AddSingleton<Data.Database>();
+
+            services.AddTransient<IValidator<Query>, Validator>();
+            //services.AddTransient<QueryHandler>();
 
             services.AddSingleton(sp =>
             {

@@ -6,17 +6,18 @@ using PaymentGateway.PublishedLanguage.Events;
 using PaymentGateway.PublishedLanguage.Commands;
 using System;
 using System.Linq;
+using MediatR;
 
 namespace PaymentGateway.Application.WriteOpperations
 {
     public class WithdrawMoneyOperation : IWriteOperations<WithdrawMoneyCommand>
     {
-        private readonly IEventSender _eventSender;
+        private readonly Mediator _mediator;
         private readonly Database _database;
 
-        public WithdrawMoneyOperation(IEventSender eventSender, Database database)
+        public WithdrawMoneyOperation(Mediator mediator, Database database)
         {
-            _eventSender = eventSender;
+            _mediator = mediator;
             _database = database;
         }
         public void PerformOperation(WithdrawMoneyCommand operation)
@@ -47,7 +48,7 @@ namespace PaymentGateway.Application.WriteOpperations
                 OldAmount = oldAmount,
                 NewAmount = acount.Balance
             };
-            _eventSender.SendEvent(eventBalanceUpdated);
+            _mediator.Send(eventBalanceUpdated);
 
 
         }

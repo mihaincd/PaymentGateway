@@ -1,7 +1,7 @@
-﻿namespace Abstractions
-{
-    public interface IEventSender
-    {
-        void SendEvent(object e);
-    }
-}
+﻿//namespace Abstractions
+//{
+//    public interface IEventSender //INotification
+//    {
+//        void SendEvent(object e);
+//    }
+//}

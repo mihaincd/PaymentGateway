@@ -14,19 +14,19 @@ namespace PaymentGateway.Application.WriteOpperations
 {
     public class CreateAccountOperation : IRequestHandler<CreateAccountCommand>
     {
-        private readonly IEventSender _eventSender;
+        private readonly IMediator _mediator;
         private readonly AccountOptions _accountOptions;
         private readonly Database _database;
         private readonly NewIban _ibanService;
-        public CreateAccountOperation(IEventSender eventSender, AccountOptions accountOptions, Database database, NewIban ibanService)
+        public CreateAccountOperation(IMediator mediator, AccountOptions accountOptions, Database database, NewIban ibanService)
         {
-            _eventSender = eventSender;
+            _mediator = mediator;
             _accountOptions = accountOptions;
             _database = database;
             _ibanService = ibanService;
         }
 
-        public Task<Unit> Handle(CreateAccountCommand request, CancellationToken cancellationToken)
+        public async Task<Unit> Handle(CreateAccountCommand request, CancellationToken cancellationToken)
         {
             Random random = new();
 
@@ -72,9 +72,9 @@ namespace PaymentGateway.Application.WriteOpperations
             _database.SaveChange();
 
             AccountCreated eventAcountCreated = new(request.Sold, request.Cnp, request.Curency);
-            _eventSender.SendEvent(eventAcountCreated);
+             await _mediator.Publish(eventAcountCreated);
 
-            return Unit.Task;
+            return Unit.Value;
 
         }
 

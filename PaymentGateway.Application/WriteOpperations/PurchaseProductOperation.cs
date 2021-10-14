@@ -13,16 +13,16 @@ namespace PaymentGateway.Application.WriteOpperations
 {
     public class PurchaseProductOperation : IRequestHandler<PurchaseProductCommand>
     {
-        private readonly IEventSender _eventSender;
+        private readonly Mediator _mediator;
         private readonly Database _database;
 
-        public PurchaseProductOperation(IEventSender eventSender, Database database)
+        public PurchaseProductOperation(Mediator mediator, Database database)
         {
-            _eventSender = eventSender;
+            _mediator = mediator;
             _database = database;
         }
 
-        public Task<Unit> Handle(PurchaseProductCommand request, CancellationToken cancellationToken)
+        public async Task<Unit> Handle(PurchaseProductCommand request, CancellationToken cancellationToken)
         {
             Account account;
             Person person;
@@ -105,9 +105,9 @@ namespace PaymentGateway.Application.WriteOpperations
             {
                 ProductDetails = request.ProductDetails
             };
-            _eventSender.SendEvent(eventProductPurchased);
+            await _mediator.Publish(eventProductPurchased);
 
-            return Unit.Task;
+            return Unit.Value;
         }
 
 

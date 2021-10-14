@@ -14,16 +14,16 @@ namespace PaymentGateway.Application.WriteOpperations
 {
     public class DepositMoneyOperation : IRequestHandler<DepositMoneyCommand>
     {
-        private readonly IEventSender _eventSender;
+        private readonly Mediator _mediator;
         private readonly Database _database;
 
-        public DepositMoneyOperation(IEventSender eventSender, Database database)
+        public DepositMoneyOperation(Mediator mediator, Database database)
         {
-            _eventSender = eventSender;
+            _mediator = mediator;
             _database = database;
         }
 
-        public Task<Unit> Handle(DepositMoneyCommand request, CancellationToken cancellationToken)
+        public async Task<Unit> Handle(DepositMoneyCommand request, CancellationToken cancellationToken)
         {
             Account acount = _database.Accounts.FirstOrDefault(x => x.IdAccount == request.AcountId);
 
@@ -50,8 +50,8 @@ namespace PaymentGateway.Application.WriteOpperations
                 OldAmount = oldAmount,
                 NewAmount = acount.Balance
             };
-            _eventSender.SendEvent(eventBalanceUpdated);
-            return Unit.Task;
+            await _mediator.Publish(eventBalanceUpdated);
+            return Unit.Value;
         }
 
        
