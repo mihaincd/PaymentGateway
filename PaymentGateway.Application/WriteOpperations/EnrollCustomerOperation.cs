@@ -43,7 +43,7 @@ namespace PaymentGateway.Application.WriteOpperations
             {
                 throw new Exception("Unsuported person type");
             }
-            person.Id = _database.Persons.Count + 1;
+            person.IdProduct = _database.Persons.Count + 1;
             _database.Persons.Add(person);
 
             Account account = new()

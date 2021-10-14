@@ -4,7 +4,7 @@ namespace PaymentGateway.Models
 {
     public class Transaction
     {
-        public int Id { get; set; }
+        public int IdTransaction { get; set; }
         public double Amount { get; set; }
         public DateTime DateOfTransaction { get; set; }
         public DateTime DateOfOperation { get; set; }

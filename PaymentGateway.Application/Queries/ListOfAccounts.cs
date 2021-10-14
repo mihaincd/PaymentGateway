@@ -21,7 +21,7 @@ namespace PaymentGateway.Application.Queries
             public bool Validate(Query input)
             {
                 var person = input.PersonId.HasValue ?
-                    _database.Persons.FirstOrDefault(x => x.Id == input.PersonId) :
+                    _database.Persons.FirstOrDefault(x => x.IdProduct == input.PersonId) :
                     _database.Persons.FirstOrDefault(x => x.Cnp == input.Cnp);
 
                 return person != null;
@@ -56,16 +56,16 @@ namespace PaymentGateway.Application.Queries
                 }
 
                 var person = request.PersonId.HasValue ?
-                  _database.Persons.FirstOrDefault(x => x.Id == request.PersonId) :
+                  _database.Persons.FirstOrDefault(x => x.IdProduct == request.PersonId) :
                   _database.Persons.FirstOrDefault(x => x.Cnp == request.Cnp);
 
-                var db = _database.Accounts.Where(x => x.IdPerson == person.Id);
+                var db = _database.Accounts.Where(x => x.IdPerson == person.IdProduct);
                 var result = db.Select(x => new Model
                 {
                     Balance = x.Balance,
                     Currency = x.Currency,
                     Iban = x.IbanCode,
-                    Id = x.Id,
+                    Id = x.IdAccount,
                     Limit = x.Limit,
                     Status = x.Status,
                     Type = x.Type

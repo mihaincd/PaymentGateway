@@ -33,7 +33,7 @@ namespace PaymentGateway.Application.WriteOpperations
             Person person;
             if (request.PersonId.HasValue)
             {
-                person = _database.Persons.FirstOrDefault(x => x.Id == request.PersonId); //get person by id
+                person = _database.Persons.FirstOrDefault(x => x.IdProduct == request.PersonId); //get person by id
             }
             else
             {
@@ -65,7 +65,7 @@ namespace PaymentGateway.Application.WriteOpperations
                 Type = request.ClientType,
                 Balance = request.Sold,
                 IbanCode = _ibanService.GetNewIban(),
-                Id = _database.Persons.Count + 1
+                IdAccount = _database.Persons.Count + 1
             };
 
             _database.Accounts.Add(account);

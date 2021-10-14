@@ -29,7 +29,7 @@ namespace PaymentGateway.Application.WriteOpperations
 
             if (request.IdAccount.HasValue)
             {
-                account = _database.Accounts.FirstOrDefault(x => x.Id == request.IdAccount);
+                account = _database.Accounts.FirstOrDefault(x => x.IdAccount == request.IdAccount);
             }
             else
             {
@@ -38,7 +38,7 @@ namespace PaymentGateway.Application.WriteOpperations
 
             if (request.IdPerson.HasValue)
             {
-                person = _database.Persons.FirstOrDefault(x => x.Id == request.IdPerson);
+                person = _database.Persons.FirstOrDefault(x => x.IdProduct == request.IdPerson);
             }
             else
             {
@@ -49,7 +49,7 @@ namespace PaymentGateway.Application.WriteOpperations
 
             if (person == null) throw new Exception("Person not found");
 
-            var exists = _database.Accounts.Any(x => x.Id == person.Id && x.Id == account.Id);
+            var exists = _database.Accounts.Any(x => x.IdAccount == person.IdProduct && x.IdAccount == account.IdAccount);
 
             if (!exists)
             {
@@ -60,7 +60,7 @@ namespace PaymentGateway.Application.WriteOpperations
 
             foreach (var item in request.ProductDetails)
             {
-                var product = _database.Products.FirstOrDefault(x => x.Id == item.ProductId);
+                var product = _database.Products.FirstOrDefault(x => x.IdProduct == item.ProductId);
 
                 if (product.Limit < item.Quantity)
                 {
@@ -87,10 +87,10 @@ namespace PaymentGateway.Application.WriteOpperations
 
             foreach (var item in request.ProductDetails)
             {
-                var product = _database.Products.FirstOrDefault(x => x.Id == item.ProductId);
+                var product = _database.Products.FirstOrDefault(x => x.IdProduct == item.ProductId);
                 ProductXTransaction productXTransaction = new ProductXTransaction
                 {
-                    TransactionId = transaction.Id,
+                    TransactionId = transaction.IdTransaction,
                     ProductId = item.ProductId,
                     Quantity = item.Quantity,
                     Value = product.Value,

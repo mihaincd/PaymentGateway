@@ -22,7 +22,7 @@ namespace PaymentGateway.Application.WriteOpperations
         public void PerformOperation(WithdrawMoneyCommand operation)
         {
 
-            Account acount = _database.Accounts.FirstOrDefault(x => x.Id == operation.AcountId);
+            Account acount = _database.Accounts.FirstOrDefault(x => x.IdAccount == operation.AcountId);
             Transaction transaction = new Transaction
             {
                 Amount = operation.WithdrawAmmount,
@@ -41,7 +41,7 @@ namespace PaymentGateway.Application.WriteOpperations
             BalanceUpdated eventBalanceUpdated = new BalanceUpdated
             {
 
-                AccountId = acount.Id,
+                AccountId = acount.IdAccount,
                 Curency = acount.Currency,
                 EventDate = DateTimeService.GetDate(),
                 OldAmount = oldAmount,

@@ -25,7 +25,7 @@ namespace PaymentGateway.Application.WriteOpperations
 
         public Task<Unit> Handle(DepositMoneyCommand request, CancellationToken cancellationToken)
         {
-            Account acount = _database.Accounts.FirstOrDefault(x => x.Id == request.AcountId);
+            Account acount = _database.Accounts.FirstOrDefault(x => x.IdAccount == request.AcountId);
 
             Transaction transaction = new Transaction
             {
@@ -44,7 +44,7 @@ namespace PaymentGateway.Application.WriteOpperations
 
             BalanceUpdated eventBalanceUpdated = new BalanceUpdated
             {
-                AccountId = acount.Id,
+                AccountId = acount.IdAccount,
                 Curency = acount.Currency,
                 EventDate = DateTimeService.GetDate(),
                 OldAmount = oldAmount,
