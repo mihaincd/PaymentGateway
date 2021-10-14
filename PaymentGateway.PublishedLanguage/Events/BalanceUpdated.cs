@@ -1,12 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using MediatR;
+using System;
 
 namespace PaymentGateway.PublishedLanguage.Events
 {
-    public class BalanceUpdated
+    public class BalanceUpdated :INotification
     {
         public int AccountId { get; set; }
         public double OldAmount { get; set; }

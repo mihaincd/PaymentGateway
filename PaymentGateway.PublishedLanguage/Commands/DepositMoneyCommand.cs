@@ -1,12 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using MediatR;
+using System;
 
-namespace PaymentGateway.PublishedLanguage.WriteSide
+namespace PaymentGateway.PublishedLanguage.Commands
 {
-    public class DepositMoneyCommand
+    public class DepositMoneyCommand : IRequest
     {
         public int AcountId { get; set; }
         public double DepositAmmount { get; set; }

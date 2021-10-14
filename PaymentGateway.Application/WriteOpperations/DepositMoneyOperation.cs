@@ -3,13 +3,16 @@ using PaymentGateway.Application.Services;
 using PaymentGateway.Data;
 using PaymentGateway.Models;
 using PaymentGateway.PublishedLanguage.Events;
-using PaymentGateway.PublishedLanguage.WriteSide;
+using PaymentGateway.PublishedLanguage.Commands;
 using System;
 using System.Linq;
+using MediatR;
+using System.Threading.Tasks;
+using System.Threading;
 
 namespace PaymentGateway.Application.WriteOpperations
 {
-    public class DepositMoneyOperation : IWriteOperations<DepositMoneyCommand>
+    public class DepositMoneyOperation : IRequestHandler<DepositMoneyCommand>
     {
         private readonly IEventSender _eventSender;
         private readonly Database _database;
@@ -20,22 +23,20 @@ namespace PaymentGateway.Application.WriteOpperations
             _database = database;
         }
 
-
-        public void PerformOperation(DepositMoneyCommand operation)
+        public Task<Unit> Handle(DepositMoneyCommand request, CancellationToken cancellationToken)
         {
+            Account acount = _database.Accounts.FirstOrDefault(x => x.Id == request.AcountId);
 
-            Account acount = _database.Accounts.FirstOrDefault(x => x.Id == operation.AcountId);
-            
             Transaction transaction = new Transaction
             {
-                Amount = operation.DepositAmmount,
-                Currency = operation.Curency,
-                DateOfTransaction = operation.DateOfTransaction,
+                Amount = request.DepositAmmount,
+                Currency = request.Curency,
+                DateOfTransaction = request.DateOfTransaction,
                 DateOfOperation = DateTime.UtcNow
             };
             var oldAmount = acount.Balance;
 
-            acount.Balance += operation.DepositAmmount;
+            acount.Balance += request.DepositAmmount;
 
 
             _database.Transactions.Add(transaction);
@@ -50,7 +51,9 @@ namespace PaymentGateway.Application.WriteOpperations
                 NewAmount = acount.Balance
             };
             _eventSender.SendEvent(eventBalanceUpdated);
-
+            return Unit.Task;
         }
+
+       
     }
 }

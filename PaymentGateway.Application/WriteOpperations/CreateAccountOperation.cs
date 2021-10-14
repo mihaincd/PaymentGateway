@@ -1,15 +1,18 @@
 ﻿using Abstractions;
+using MediatR;
 using PaymentGateway.Application.ReadOpperations;
 using PaymentGateway.Data;
 using PaymentGateway.Models;
 using PaymentGateway.PublishedLanguage.Events;
-using PaymentGateway.PublishedLanguage.WriteSide;
+using PaymentGateway.PublishedLanguage.Commands;
 using System;
 using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace PaymentGateway.Application.WriteOpperations
 {
-    public class CreateAccountOperation : IWriteOperations<CreateAccountCommand>
+    public class CreateAccountOperation : IRequestHandler<CreateAccountCommand>
     {
         private readonly IEventSender _eventSender;
         private readonly AccountOptions _accountOptions;
@@ -22,29 +25,30 @@ namespace PaymentGateway.Application.WriteOpperations
             _database = database;
             _ibanService = ibanService;
         }
-        public void PerformOperation(CreateAccountCommand operation)
+
+        public Task<Unit> Handle(CreateAccountCommand request, CancellationToken cancellationToken)
         {
             Random random = new();
 
             Person person;
-            if (operation.PersonId.HasValue)
+            if (request.PersonId.HasValue)
             {
-                person = _database.Persons.FirstOrDefault(x => x.Id == operation.PersonId); //get person by id
+                person = _database.Persons.FirstOrDefault(x => x.Id == request.PersonId); //get person by id
             }
             else
             {
-                person = _database.Persons.FirstOrDefault(x => x.Cnp == operation.Cnp);
+                person = _database.Persons.FirstOrDefault(x => x.Cnp == request.Cnp);
             }
             if (person == null)
             {
                 throw new Exception("Person not found");
             }
 
-            if (operation.ClientType == "Company")
+            if (request.ClientType == "Company")
             {
                 person.Type = PersonType.Company;
             }
-            else if (operation.ClientType == "Individual")
+            else if (request.ClientType == "Individual")
             {
                 person.Type = PersonType.Individual;
             }
@@ -55,11 +59,11 @@ namespace PaymentGateway.Application.WriteOpperations
 
             Account account = new()
             {
-                Limit = operation.Limit,
-                Status = operation.Status,
-                Currency = operation.Curency,
-                Type = operation.ClientType,
-                Balance = operation.Sold,
+                Limit = request.Limit,
+                Status = request.Status,
+                Currency = request.Curency,
+                Type = request.ClientType,
+                Balance = request.Sold,
                 IbanCode = _ibanService.GetNewIban(),
                 Id = _database.Persons.Count + 1
             };
@@ -67,9 +71,13 @@ namespace PaymentGateway.Application.WriteOpperations
             _database.Accounts.Add(account);
             _database.SaveChange();
 
-            AccountCreated eventAcountCreated = new(operation.Sold, operation.Cnp, operation.Curency);
+            AccountCreated eventAcountCreated = new(request.Sold, request.Cnp, request.Curency);
             _eventSender.SendEvent(eventAcountCreated);
 
+            return Unit.Task;
+
         }
+
+  
     }
 }

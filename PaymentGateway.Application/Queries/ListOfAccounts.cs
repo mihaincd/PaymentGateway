@@ -1,10 +1,13 @@
 ﻿using Abstractions;
+using MediatR;
 using PaymentGateway.Data;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 
-namespace PaymentGateway.Application.ReadOpperations
+namespace PaymentGateway.Application.Queries
 {
     public class ListOfAccounts /*: IReadOperation*/
     {
@@ -25,13 +28,13 @@ namespace PaymentGateway.Application.ReadOpperations
             }
         }
 
-        public class Query
+        public class Query:IRequest<List<Model>>
         {
             public int? PersonId { get; set; }
             public string Cnp { get; set; }
         }
 
-        public class QueryHandler : IReadOperation<Query, List<Model>>
+        public class QueryHandler : IRequestHandler<Query, List<Model>>
         {
             private readonly Database _database;
             private readonly IValidator<Query> _validator;
@@ -42,18 +45,19 @@ namespace PaymentGateway.Application.ReadOpperations
                 _database = database;
                 _validator = validator;
             }
-            public List<Model> PerformOperation(Query query)
+
+            public Task<List<Model>> Handle(Query request, CancellationToken cancellationToken)
             {
-                var isValid = _validator.Validate(query);
+                var isValid = _validator.Validate(request);
 
                 if (!isValid)
                 {
                     throw new Exception("Person not found");
                 }
 
-                var person = query.PersonId.HasValue ?
-                  _database.Persons.FirstOrDefault(x => x.Id == query.PersonId) :
-                  _database.Persons.FirstOrDefault(x => x.Cnp == query.Cnp);
+                var person = request.PersonId.HasValue ?
+                  _database.Persons.FirstOrDefault(x => x.Id == request.PersonId) :
+                  _database.Persons.FirstOrDefault(x => x.Cnp == request.Cnp);
 
                 var db = _database.Accounts.Where(x => x.IdPerson == person.Id);
                 var result = db.Select(x => new Model
@@ -66,9 +70,10 @@ namespace PaymentGateway.Application.ReadOpperations
                     Status = x.Status,
                     Type = x.Type
                 }).ToList();
-                return result;
-
+                return Task.FromResult(result);
             }
+
+       
         }
 
         public class Model

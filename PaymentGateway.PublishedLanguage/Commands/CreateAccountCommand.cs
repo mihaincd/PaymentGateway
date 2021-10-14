@@ -1,12 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using MediatR;
 
-namespace PaymentGateway.PublishedLanguage.WriteSide
+namespace PaymentGateway.PublishedLanguage.Commands
 {
-    public class CreateAccountCommand
+    public class CreateAccountCommand : IRequest
     {
         public int? PersonId { get; set; }
         public double Sold { get; set; }

@@ -3,12 +3,9 @@ using PaymentGateway.Application.Services;
 using PaymentGateway.Data;
 using PaymentGateway.Models;
 using PaymentGateway.PublishedLanguage.Events;
-using PaymentGateway.PublishedLanguage.WriteSide;
+using PaymentGateway.PublishedLanguage.Commands;
 using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace PaymentGateway.Application.WriteOpperations
 {
@@ -26,11 +23,13 @@ namespace PaymentGateway.Application.WriteOpperations
         {
 
             Account acount = _database.Accounts.FirstOrDefault(x => x.Id == operation.AcountId);
-            Transaction transaction = new Transaction();
-            transaction.Amount = operation.WithdrawAmmount;
-            transaction.Currency = operation.Curency;
-            transaction.DateOfTransaction = operation.DateOfTransaction;
-            transaction.DateOfOperation = DateTime.UtcNow;
+            Transaction transaction = new Transaction
+            {
+                Amount = operation.WithdrawAmmount,
+                Currency = operation.Curency,
+                DateOfTransaction = operation.DateOfTransaction,
+                DateOfOperation = DateTime.UtcNow
+            };
             var oldAmount = acount.Balance;
 
             acount.Balance -= operation.WithdrawAmmount;
