@@ -3,7 +3,7 @@ using System;
 
 namespace PaymentGateway.PublishedLanguage.Events
 {
-    public class BalanceUpdated :INotification
+    public class BalanceUpdated : INotification
     {
         public int AccountId { get; set; }
         public double OldAmount { get; set; }

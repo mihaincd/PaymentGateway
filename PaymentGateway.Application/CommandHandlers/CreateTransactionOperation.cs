@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace PaymentGateway.Application.WriteOpperations
+namespace PaymentGateway.Application.CommandHandlers
 {
     class CreateTransactionOperation
     {

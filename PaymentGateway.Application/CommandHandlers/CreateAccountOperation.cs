@@ -1,4 +1,4 @@
-﻿using Abstractions;
+﻿//using Abstractions;
 using MediatR;
 using PaymentGateway.Application.ReadOpperations;
 using PaymentGateway.Data;
@@ -10,7 +10,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace PaymentGateway.Application.WriteOpperations
+namespace PaymentGateway.Application.CommandHandlers
 {
     public class CreateAccountOperation : IRequestHandler<CreateAccountCommand>
     {
@@ -33,7 +33,7 @@ namespace PaymentGateway.Application.WriteOpperations
             Person person;
             if (request.PersonId.HasValue)
             {
-                person = _database.Persons.FirstOrDefault(x => x.IdProduct == request.PersonId); //get person by id
+                person = _database.Persons.FirstOrDefault(x => x.IdPerson == request.PersonId); //get person by id
             }
             else
             {

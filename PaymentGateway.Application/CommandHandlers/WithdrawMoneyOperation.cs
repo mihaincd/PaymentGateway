@@ -1,4 +1,4 @@
-﻿using Abstractions;
+﻿//using Abstractions;
 using PaymentGateway.Application.Services;
 using PaymentGateway.Data;
 using PaymentGateway.Models;
@@ -7,33 +7,35 @@ using PaymentGateway.PublishedLanguage.Commands;
 using System;
 using System.Linq;
 using MediatR;
+using System.Threading.Tasks;
+using System.Threading;
 
-namespace PaymentGateway.Application.WriteOpperations
+namespace PaymentGateway.Application.CommandHandlers
 {
-    public class WithdrawMoneyOperation : IWriteOperations<WithdrawMoneyCommand>
+    public class WithdrawMoneyOperation : IRequestHandler<WithdrawMoneyCommand>
     {
-        private readonly Mediator _mediator;
+        private readonly IMediator _mediator;
         private readonly Database _database;
 
-        public WithdrawMoneyOperation(Mediator mediator, Database database)
+        public WithdrawMoneyOperation(IMediator mediator, Database database)
         {
             _mediator = mediator;
             _database = database;
         }
-        public void PerformOperation(WithdrawMoneyCommand operation)
-        {
 
-            Account acount = _database.Accounts.FirstOrDefault(x => x.IdAccount == operation.AcountId);
+        public async Task<Unit> Handle(WithdrawMoneyCommand request, CancellationToken cancellationToken)
+        {
+            Account acount = _database.Accounts.FirstOrDefault(x => x.IdAccount == request.AcountId);
             Transaction transaction = new Transaction
             {
-                Amount = operation.WithdrawAmmount,
-                Currency = operation.Curency,
-                DateOfTransaction = operation.DateOfTransaction,
+                Amount = request.WithdrawAmmount,
+                Currency = request.Curency,
+                DateOfTransaction = request.DateOfTransaction,
                 DateOfOperation = DateTime.UtcNow
             };
             var oldAmount = acount.Balance;
 
-            acount.Balance -= operation.WithdrawAmmount;
+            acount.Balance -= request.WithdrawAmmount;
 
 
             _database.Transactions.Add(transaction);
@@ -48,9 +50,9 @@ namespace PaymentGateway.Application.WriteOpperations
                 OldAmount = oldAmount,
                 NewAmount = acount.Balance
             };
-            _mediator.Send(eventBalanceUpdated);
+            await _mediator.Publish(eventBalanceUpdated);
 
-
+            return Unit.Value;
         }
     }
 }

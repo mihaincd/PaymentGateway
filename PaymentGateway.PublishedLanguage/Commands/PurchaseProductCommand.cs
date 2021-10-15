@@ -13,7 +13,7 @@ namespace PaymentGateway.PublishedLanguage.Commands
         public int? IdAccount { get; set; }
         
 
-        public class PurchaseProductDetail: IRequest
+        public class PurchaseProductDetail
         {
             public int ProductId { get; set; }
             public double Quantity { get; set; }

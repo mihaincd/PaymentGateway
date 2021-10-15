@@ -1,20 +1,23 @@
-﻿using MediatR;
+﻿using FluentValidation;
+using MediatR;
+using MediatR.Pipeline;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using PaymentGateway.Application;
 using PaymentGateway.Application.Queries;
 using PaymentGateway.Application.ReadOpperations;
-using PaymentGateway.Application.WriteOpperations;
 using PaymentGateway.Data;
 using PaymentGateway.ExternalService;
 using PaymentGateway.Models;
 using PaymentGateway.PublishedLanguage.Commands;
+using PaymentGateway.PublishedLanguage.Events;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 using static PaymentGateway.PublishedLanguage.Commands.PurchaseProductCommand;
+using PaymentGateway;
 
 namespace PaimentGateway
 {
@@ -28,6 +31,7 @@ namespace PaimentGateway
         /// 5.save to database
         /// 6.emitere eveniment
         /// </summary>
+        
         static IConfiguration Configuration;
 
         static async Task Main(string[] args)
@@ -43,12 +47,24 @@ namespace PaimentGateway
 
             var source =new CancellationTokenSource();
             var cancellationToken = source.Token;
-
-
-
-            services.AddMediatR(typeof(ListOfAccounts).Assembly, typeof(AllEventsHandler).Assembly);
-
             services.RegisterBusinessServices(Configuration);
+
+            services.Scan(scan => scan
+               .FromAssemblyOf<ListOfAccounts>()
+               .AddClasses(classes => classes.AssignableTo<IValidator>())
+               .AsImplementedInterfaces()
+               .WithScopedLifetime());
+
+
+            services.AddScoped(typeof(IPipelineBehavior<,>), typeof(RequestPreProcessorBehavior<,>));
+            services.AddScoped(typeof(IPipelineBehavior<,>), typeof(RequestPostProcessorBehavior<,>));
+            services.AddScoped(typeof(IRequestPreProcessor<>), typeof(ValidationPreProcessor<>));
+
+            services.AddScopedContravariant<INotificationHandler<INotification>, AllEventsHandler>(typeof(CustomerEnrolled).Assembly);
+
+
+            services.AddMediatR(new[] { typeof(ListOfAccounts).Assembly, typeof(AllEventsHandler).Assembly }); // get all IRequestHandler and INotificationHandler classes
+
 
             //services.AddSingleton<IEventSender, EventSender>();
             services.AddSingleton(Configuration);
@@ -60,7 +76,6 @@ namespace PaimentGateway
             var mediator = serviceProvider.GetRequiredService<IMediator>();
 
             //use
-
 
             //Database database = Database.GetInstance();
             Console.WriteLine(database.Accounts.Count);
@@ -78,10 +93,8 @@ namespace PaimentGateway
                 UniqueIdentifier = "1234556789",
                 ClientType = "Individual"
             };
-
             //EnrollCustomerOperation enrolledClient = serviceProvider.GetRequiredService<EnrollCustomerOperation>();
             //enrolledClient.Handle(command, default).GetAwaiter().GetResult();
-
             await mediator.Send(command, cancellationToken);
 
             CreateAccountCommand newAccount = new()
@@ -95,10 +108,8 @@ namespace PaimentGateway
                 PersonId = 1,
                 IbanCode = (Int64.Parse(ibanService.GetNewIban()) - 1).ToString()
             };
-
             //CreateAccountOperation createdAccount = serviceProvider.GetRequiredService<CreateAccountOperation>();
             //createdAccount.Handle(newAccount, default).GetAwaiter().GetResult();
-
             await mediator.Send(newAccount, cancellationToken);
 
 
@@ -109,10 +120,8 @@ namespace PaimentGateway
                 Curency = "$",
                 DateOfOperation = DateTime.UtcNow
             };
-
             //DepositMoneyOperation depositOperation = serviceProvider.GetRequiredService<DepositMoneyOperation>();
             //depositOperation.Handle(depositMoney, default).GetAwaiter().GetResult();
-
             await mediator.Send(depositMoney, cancellationToken);
 
 
@@ -124,10 +133,8 @@ namespace PaimentGateway
                 WithdrawAmmount = 100,
                 DateOfOperation = DateTime.UtcNow
             };
-
             //WithdrawMoneyOperation withdrawOperation = serviceProvider.GetRequiredService<WithdrawMoneyOperation>();
             //withdrawOperation.PerformOperation(withdrawMoney);
-
             await mediator.Send(withdrawMoney, cancellationToken);
 
 
@@ -158,7 +165,6 @@ namespace PaimentGateway
             };
             //PurchaseProductOperation purchaseProductOperation = serviceProvider.GetRequiredService<PurchaseProductOperation>();
             //purchaseProductOperation.Handle(purchaseProductCommand, default).GetAwaiter().GetResult();
-
             await mediator.Send(purchaseProductCommand, cancellationToken);
 
 
@@ -171,7 +177,6 @@ namespace PaimentGateway
             //var result = handler.Handle(query, default).GetAwaiter().GetResult();
 
             var result = await mediator.Send(query, cancellationToken);
-
         }
     }
 }

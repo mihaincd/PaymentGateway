@@ -5,9 +5,13 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using PaymentGateway.Application;
 using PaymentGateway.Application.Queries;
-using PaymentGateway.Application.WriteOpperations;
+using PaymentGateway.Application.CommandHandlers;
 using PaymentGateway.ExternalService;
+using PaymentGateway.PublishedLanguage.Events;
 using PaymentGateway.WebApi.Swagger;
+using MediatR.Pipeline;
+using FluentValidation;
+using PaymentGateway.WebApi.MediatorPipeline;
 
 namespace PaymentGateway.WebApi
 {
@@ -27,15 +31,29 @@ namespace PaymentGateway.WebApi
             //services.AddSingleton<IEventSender, EventSender>();
             //services.AddMediatR(typeof(EnrollAgentComandHandler).Assembly);
 
-            var firstAssembly = typeof(ListOfAccounts).Assembly; // handlere c1..c3
+            //  var firstAssembly = typeof(ListOfAccounts).Assembly; // handlere c1..c3  //l-am comentat pentru ca poti sa il schimbi direct spre apelare
             //var firstAssembly = typeof(Program).Assembly; // handler generic
-            var secondAssembly = typeof(AllEventsHandler).Assembly; // catch all
+            //  var secondAssembly = typeof(AllEventsHandler).Assembly; // catch all
             //var trdasembly = System.Reflection.Assembly.LoadFrom("c:/a.dll");
-            services.AddMediatR(firstAssembly, secondAssembly); // get all IRequestHandler and INotificationHandler classes
+
+            services.Scan(scan => scan
+                .FromAssemblyOf<ListOfAccounts>()
+                .AddClasses(classes => classes.AssignableTo<IValidator>())
+                .AsImplementedInterfaces()
+                .WithScopedLifetime());
+
+            services.AddMediatR(new[] { typeof(ListOfAccounts).Assembly, typeof(AllEventsHandler).Assembly }); // get all IRequestHandler and INotificationHandler classes
+
+            services.AddScoped(typeof(IPipelineBehavior<,>), typeof(RequestPreProcessorBehavior<,>));
+            services.AddScoped(typeof(IPipelineBehavior<,>), typeof(RequestPostProcessorBehavior<,>));
+            services.AddScoped(typeof(IRequestPreProcessor<>), typeof(ValidationPreProcessor<>));
+
+
+            services.AddScopedContravariant<INotificationHandler<INotification>, AllEventsHandler>(typeof(CustomerEnrolled).Assembly);
 
 
 
-            services.AddTransient<CreateAccountOperation>();
+            //services.AddTransient<CreateAccountOperation>();
 
 
             //1)services.AddSingleton<AccountOptions>(new AccountOptions { InitialBalance = 200 });

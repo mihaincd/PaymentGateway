@@ -1,4 +1,4 @@
-﻿using Abstractions;
+﻿//using Abstractions;
 using PaymentGateway.Data;
 using PaymentGateway.Models;
 using PaymentGateway.PublishedLanguage.Events;
@@ -9,14 +9,14 @@ using MediatR;
 using System.Threading.Tasks;
 using System.Threading;
 
-namespace PaymentGateway.Application.WriteOpperations
+namespace PaymentGateway.Application.CommandHandlers
 {
     public class PurchaseProductOperation : IRequestHandler<PurchaseProductCommand>
     {
-        private readonly Mediator _mediator;
+        private readonly IMediator _mediator;
         private readonly Database _database;
 
-        public PurchaseProductOperation(Mediator mediator, Database database)
+        public PurchaseProductOperation(IMediator mediator, Database database)
         {
             _mediator = mediator;
             _database = database;
@@ -38,7 +38,7 @@ namespace PaymentGateway.Application.WriteOpperations
 
             if (request.IdPerson.HasValue)
             {
-                person = _database.Persons.FirstOrDefault(x => x.IdProduct == request.IdPerson);
+                person = _database.Persons.FirstOrDefault(x => x.IdPerson == request.IdPerson);
             }
             else
             {
@@ -49,7 +49,7 @@ namespace PaymentGateway.Application.WriteOpperations
 
             if (person == null) throw new Exception("Person not found");
 
-            var exists = _database.Accounts.Any(x => x.IdAccount == person.IdProduct && x.IdAccount == account.IdAccount);
+            var exists = _database.Accounts.Any(x => x.IdAccount == person.IdPerson && x.IdAccount == account.IdAccount);
 
             if (!exists)
             {

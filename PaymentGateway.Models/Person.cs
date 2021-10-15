@@ -4,7 +4,7 @@ namespace PaymentGateway.Models
 {
     public class Person
     {
-        public int IdProduct { get; set; }
+        public int IdPerson { get; set; }
         public string Name { get; set; }
         public string Cnp { get; set; }
         public string IbanCode { get; set; }

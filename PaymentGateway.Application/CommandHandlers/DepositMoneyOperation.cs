@@ -1,4 +1,4 @@
-﻿using Abstractions;
+﻿//using Abstractions;
 using PaymentGateway.Application.Services;
 using PaymentGateway.Data;
 using PaymentGateway.Models;
@@ -10,14 +10,14 @@ using MediatR;
 using System.Threading.Tasks;
 using System.Threading;
 
-namespace PaymentGateway.Application.WriteOpperations
+namespace PaymentGateway.Application.CommandHandlers
 {
     public class DepositMoneyOperation : IRequestHandler<DepositMoneyCommand>
     {
-        private readonly Mediator _mediator;
+        private readonly IMediator _mediator;
         private readonly Database _database;
 
-        public DepositMoneyOperation(Mediator mediator, Database database)
+        public DepositMoneyOperation(IMediator mediator, Database database)
         {
             _mediator = mediator;
             _database = database;

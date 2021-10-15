@@ -1,4 +1,4 @@
-﻿using Abstractions;
+﻿//using Abstractions;
 using PaymentGateway.Application.ReadOpperations;
 using PaymentGateway.Data;
 using PaymentGateway.Models;
@@ -9,15 +9,15 @@ using MediatR;
 using System.Threading.Tasks;
 using System.Threading;
 
-namespace PaymentGateway.Application.WriteOpperations
+namespace PaymentGateway.Application.CommandHandlers
 {
     public class EnrollCustomerOperation : IRequestHandler<EnrollCustomerCommand>
     {
-        private readonly Mediator _mediator;
+        private readonly IMediator _mediator;
         private readonly Database _database;
         private readonly NewIban _ibanService;
 
-        public EnrollCustomerOperation(Mediator mediator, Database database, NewIban ibanService)
+        public EnrollCustomerOperation(IMediator mediator, Database database, NewIban ibanService)
         {
             _mediator = mediator;
             _database = database;
@@ -43,7 +43,7 @@ namespace PaymentGateway.Application.WriteOpperations
             {
                 throw new Exception("Unsuported person type");
             }
-            person.IdProduct = _database.Persons.Count + 1;
+            person.IdPerson = _database.Persons.Count + 1;
             _database.Persons.Add(person);
 
             Account account = new()
